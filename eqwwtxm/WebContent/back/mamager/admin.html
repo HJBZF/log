@@ -1,0 +1,117 @@
+<table id="admin_data"></table>
+
+<script type="text/javascript">
+var adminEditRow=undefined;  //当前正在编辑的行
+var adminOp;  //操作
+var adminFlag;  //标识
+var adminObj=$('#admin_data').datagrid({   
+    url:'../../adminServlet',  
+    queryParams:{op:"findByPage"},
+    fitColumns:true,
+    pagination:true,
+    rownumbers:true,
+    striped:true,
+    fit:true,
+    remoteSort:false,
+    pageSize:5,
+    pageList:[5,10,20,30,40,50],
+    sortName:'aid',
+    columns:[[   
+        {checkbox:true},
+        {field:'aid',title:'管理员编号',width:100,align:'center',sortable:true},   
+        {field:'aname',title:'管理员姓名',width:100,align:'center',editor:{type:"text",options:{required:true}}},   
+        {field:'pwd',title:'管理员密码',width:100,align:'center',editor:{type:"text",options:{required:true}}}   
+    ]],
+    toolbar: [{
+    	text:"添加",
+		iconCls: 'icon-add',
+		handler: function(){
+			adminOp="addAdmin";
+			adminFlag="添加";
+			
+			if(adminEditRow==undefined){
+				adminObj.datagrid('insertRow',{index:0,row: {}});
+				adminObj.datagrid('beginEdit',0);
+				adminEditRow=0;
+			}else{
+				adminObj.datagrid('rejectChanges');
+				adminEditRow=undefined;
+			}			
+		}
+	},'-',{
+		text:"修改",
+		iconCls: 'icon-edit',
+		handler: function(){
+			adminOp="editStoreType";
+			adminFlag="修改";
+			
+			if(adminEditRow!=undefined){
+				adminObj.datagrid('endEdit',adminEditRow);  //结束编辑
+				adminObj.datagrid('rejectChanges');
+				adminEditRow=undefined;
+			}
+			
+			var row=adminObj.datagrid('getChecked')[0];
+			if(row==undefined){
+				$.messager.show({title:'温馨提示',msg:'请选择您要修改的管理员信息...',timeout:2000,showType:'slide'});
+			}else{
+				var index=adminObj.datagrid('getRowIndex',row);
+				adminObj.datagrid('beginEdit',index);
+				adminEditRow=index;
+			}
+		}
+	},'-',{
+		text:"删除",
+		iconCls: 'icon-remove',
+		handler: function(){
+			var rows=adminObj.datagrid('getChecked');
+			if(rows.length<=0){
+				$.messager.show({title:'温馨提示',msg:'请选择您要删除的部门信息...',timeout:2000,showType:'slide'});
+			}else{
+				$.messager.confirm('删除确认','数据一旦删除将不能恢复，您确定要删除吗?',function(r){   
+				    if (r){   
+				        var aids="";
+				        for(var i=0,len=rows.length;i<len-1;i++){
+				        	aids+=rows[i].aid+",";
+				        }
+				        aids+=rows[i].aid;
+				        
+				        $.post("../../adminServlet",{op:"deleteAdmin",aids:aids},function(data){
+							if(data>0){
+								$.messager.show({title:'成功提示',msg:'管理员信息删除成功...',timeout:2000,showType:'slide'});
+							}else{
+								$.messager.alert('失败提示','管理员信息删除失败...','error');   
+							}
+							adminObj.datagrid("reload");
+						},"text");
+				    }   
+				});  
+			}
+		}
+	},'-',{
+		text:"保存",
+		iconCls: 'icon-save',
+		handler: function(){
+			if(adminEditRow!=undefined){
+				adminObj.datagrid('endEdit',adminEditRow);
+				var row=adminObj.datagrid('getChanges')[0];
+				
+				if(row!=undefined){
+					row.op=adminOp;
+					
+					$.post("../../adminServlet",row,function(data){
+						data=parseInt( $.trim(data) );
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:adminFlag+'管理员信息成功...',timeout:2000,showType:'slide'});
+						}else{
+							$.messager.alert('失败提示',adminFlag+'管理员信息失败...','error');   
+						}
+						adminObj.datagrid("reload");
+						adminEditRow=undefined;
+					},"text");
+				}
+			}
+		}
+	}]
+});  
+</script>

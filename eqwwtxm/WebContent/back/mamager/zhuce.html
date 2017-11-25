@@ -1,0 +1,21 @@
+<script type="text/javascript">
+function panduanisselect(){
+	var email=$.trim($("#email").val());
+	var uname=$.trim($("#username").val());
+	var pwd=$.trim($("#password").val());
+	var tel=$.trim($("#tel").val());
+	var pro=$.trim($("#province").val());
+	var city=$.trim($("#city").val());
+	var area=$.trim($("#district").val());
+
+	$.post("../../userInfoServlet",{op:"userReg",email:email,uname:uname,pwd:pwd,tel:tel,pro:pro,city:city,area:area},function(data){
+		data=parseInt($.trim(data));
+		if(data>0){
+			$.messager.alert('成功提示','邮件发送成功','message'); 
+		}else{
+			$.messager.alert('失败提示','账号操作失败...','error');   
+		}
+	},"text");
+	
+}
+</script>

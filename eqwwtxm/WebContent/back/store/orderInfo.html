@@ -1,0 +1,131 @@
+<table id="orderInfo_data"></table>
+
+<script type="text/javascript">
+
+/* var order_status=["正常","拒单","接单"]; */
+var order_status=["注销","待支付","未审核","支付成功"];
+
+var orderInfoEditRow=undefined;  //当前正在编辑的行
+var orderInfoOp;  //操作
+var orderInfoFlag;  //标识
+var orderInfoObj=$('#orderInfo_data').datagrid({   
+    url:'../../orderInfoServlet',
+    queryParams:{op:"findByPage"},
+    fitColumns:true,
+    pagination:true,
+    rownumbers:true,
+    striped:true,
+    fit:true,
+    remoteSort:false,
+    pageSize:5,
+    pageList:[5,10,20,30,40,50],
+    sortName:'oid',
+    columns:[[   
+        {checkbox:true},
+        {field:'oid',title:'店铺类型编号',width:100,align:'center',sortable:true},   
+        {field:'odate',title:'下单时间',width:100,align:'center'}, 
+        {field:'total',title:'订单金额',width:100,align:'center'}, 
+        /* {field:'num',title:'购买数量',width:100,align:'center'}, */ 
+        {field:'status',title:'状态',width:100,align:'center',formatter:function(val,row,index){
+	        	return order_status[val];
+	        }},
+        /* {field:'_operate',title:'操作',width:100,align:'center',formatter:function(val,row,index){
+        	var str="";
+        	if(row.status==0){ //注销
+        		str="";
+        	}else if(row.status==4){ //正常
+        		str+="<a href='javascript:store_changeStatus(\""+row.oid+"\",1)'>[拒单]</a>";
+        	}else if(row.status==1){ //冻结
+        		str+="<a href='javascript:store_changeStatus(\""+row.oid+"\",4)'>[接单]</a>";
+        	}
+        	return str;
+        }} */
+        {field:'_operate',title:'操作',width:100,align:'center',formatter:function(val,row,index){
+        	var str="";
+        	if(row.status==0){ //注销
+        		str="";
+        	}else if(row.status==1){ //正常
+        		str+="<a href='javascript:store_change(\""+row.oid+"\",3)'>[等待支付]</a>";
+        	}else if(row.status==2){ //未审核
+        		str+="<a href='javascript:store_change("+row.oid+",0)'>[拒单]</a>";
+        		str+="<a href='javascript:store_change("+row.oid+",1)'>[接单]</a>";
+        	}else if(row.status==3){ //支付成功
+        		str+="<a href='javascript:store_change(\""+row.oid+"\",0)'>[删除]</a>";
+        	}
+        	return str;
+
+        }}
+    ]],
+    toolbar: [{
+		text:"删除",
+		iconCls: 'icon-remove',
+		handler: function(){
+			var rows=orderInfoObj.datagrid('getChecked');
+			if(rows.length<=0){
+				$.messager.show({title:'温馨提示',msg:'请选择您要删除的信息...',timeout:2000,showType:'slide'});
+			}else{
+				$.messager.confirm('删除确认','数据一旦删除将不能恢复，您确定要删除吗?',function(r){   
+				    if (r){   
+				        var oid="";
+				        for(var i=0,len=rows.length;i<len-1;i++){
+				        	oid+=rows[i].oid+",";
+				        }
+				        oid+=rows[i].oid;
+				        
+				        $.post("../../orderInfoServlet",{op:"deleteOrder",oid:oid},function(data){
+							if(data>0){
+								$.messager.show({title:'成功提示',msg:'信息删除成功...',timeout:2000,showType:'slide'});
+							}else{
+								$.messager.alert('失败提示','信息删除失败...','error');   
+							}
+							orderInfoObj.datagrid("reload");
+						},"text");
+				    }   
+				});  
+			}
+		}
+	}]
+});  
+
+/* function store_changeStatus(oid,status){
+	if(status==1){
+		store_change(oid,status);
+	}else{
+		store_change(oid,status);
+	}
+}
+
+function store_change(oid,status){
+	$.post("../../orderInfoServlet",{op:"changeStatus",oid:oid,status:status},function(data){
+		data=parseInt($.trim(data));
+		if(data>0){
+			$.messager.show({title:'成功提示',msg:'订单信息操作成功...',timeout:2000,showType:'slide'});
+			$('#orderInfo_data').datagrid("reload");
+		}else{
+			$.messager.alert('失败提示','订单信息操作失败...','error');   
+		}
+	},"text");
+} */
+/* function store_changeStatus(oid,status){
+	if(status==2){ //说明是驳回
+		store_change(oid,status)
+	}else if(status==4){
+		store_change(oid,status);
+	}else{
+		store_change(oid,status);
+	}
+} */
+
+function store_change(oid,status){
+	$.post("../../orderInfoServlet",{op:"changeStatus",oid:oid,status:status},function(data){
+		data=parseInt($.trim(data));
+		if(data>0){
+			$.messager.show({title:'成功提示',msg:'管理员信息操作成功...',timeout:2000,showType:'slide'});
+			$('#orderInfo_data').datagrid("reload");
+		}else{
+			$.messager.alert('失败提示','账号操作失败...','error');   
+		}
+	},"text");
+}
+
+</script>

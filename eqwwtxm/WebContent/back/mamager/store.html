@@ -1,0 +1,188 @@
+<table id="store_data"></table>
+
+<div  id="img-container">
+	<img src="" id="imgBig" onclick="smallImg()"/>
+</div>
+<style>
+	#img-container{
+		width:100%;
+		height:100%;
+		position:absolute;
+		left:0px;
+		top:0px;
+		background:rgba(255,255,255,0.7);
+		display:none;
+	}
+	
+	#img-container img{
+		width:300px;
+		height:300px;
+		top:100px;
+		left:450px;
+		position:absolute;
+		opacity:1;    <!-- 设置成不透明 -->
+	}
+</style>
+
+<div id="store_search">
+	<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-user-cross',plain:true" style="float:left">冻结</a>
+	<div class="datagrid-btn-separator"></div>
+	<label>店铺类型：</label>
+	<select id="store_search_stid">
+		<option value="">--全部--</option>
+	</select>
+	<label>店铺名称：</label>
+	<input type="text" name="sname" id="store_search_sname">
+	<label>省份：</label>
+	<select id="province" name="province">
+		<option value="">--请选择---</option>
+	</select>
+	<label>城市：</label>
+	<select id="city" name="city">
+		<option value="">--请选择---</option>
+	</select>
+	<label>地区：</label>
+	<select id="district" name="district">
+		<option value="">--请选择---</option>
+	</select>
+	<a href="javascript:store_search()" class="easyui-linkbutton" data-options="iconCls:'icon-user-magnify'">查询</a>
+</div>
+
+<script type="text/javascript">
+var store_storeType_data;
+var store_status=["注销","正常","未审核","审核未通过","冻结"];
+$(function(){
+	$.get("../../storeTypeServlet",{op:"find"},function(data){ //查询店铺类型
+		store_storeType_data=data;
+		
+		var str="";
+		$.each(data,function(index,item){
+			str+="<option value='"+item.stid+"'>"+item.stname+"</option>";
+		});
+		$("#store_search_stid").append($(str));
+	
+		store_showStore();
+	},"json");
+});
+
+function store_showStore(){
+	$('#store_data').datagrid({   
+	    url:'../../storeServlet',
+	    queryParams:{op:"findByPage"},
+	    fitColumns:true,
+	    pagination:true,
+	    rownumbers:true,
+	    striped:true,
+	    fit:true,
+	    remoteSort:false,
+	    pageSize:5,
+	    pageList:[5,10,20,30,40,50],
+	    sortName:'sid',
+	    columns:[[   
+	        {checkbox:true},
+	        {field:'sid',title:'店铺编号',width:80,align:'center',sortable:true},   
+	        {field:'sname',title:'店铺名称',width:120,align:'center'},   
+	        {field:'stid',title:'店铺类型',width:80,align:'center',formatter:function(val,row,index){
+	        	for(var i=0,len=store_storeType_data.length;i<len;i++){
+	        		if(store_storeType_data[i].stid==val){
+	        			return store_storeType_data[i].stname;
+	        		}
+	        	}
+	        }},   
+	        {field:'runtime',title:'营业时间',width:100,align:'center'},   
+	        {field:'tel',title:'预约电话',width:150,align:'center'},   
+	        {field:'addr',title:'店铺地址',width:250,align:'left'},   
+	        {field:'sdate',title:'注册时间',width:100,align:'center'},   
+	        {field:'status',title:'状态',width:100,align:'center',formatter:function(val,row,index){
+	        	return store_status[val];
+	        }}, 
+	        {field:'license',title:'营业执照',width:100,align:'center',formatter:function(val,row,index){
+	  			license = "<img src='../../"+val+"' width='50px' height='50px' onclick='bigImg(this.src)'>";
+	        	return license;
+	        }},
+	        {field:'_operate',title:'操作',width:100,align:'center',formatter:function(val,row,index){
+	        	var str="";
+	        	if(row.status==0){ //注销
+	        		str="";
+	        	}else if(row.status==1){ //正常
+	        		str+="<a href='javascript:store_changeStatus("+row.sid+",4)'>[冻结]</a>";
+	        	}else if(row.status==2){ //未审核
+	        		str+="<a href='javascript:store_changeStatus("+row.sid+",1)'>[通过]</a>";
+	        		str+="<a href='javascript:store_changeStatus("+row.sid+",3)'>[驳回]</a>";
+	        	}else if(row.status==4){ //冻结
+	        		str+="<a href='javascript:store_changeStatus("+row.sid+",1)'>[解冻]</a>";
+	        	}
+	        	return str;
+	        }}
+	    ]],
+	    toolbar:"#store_search"
+	});
+}
+
+/* var img = document.getElementById('img');
+function bigger(){
+ img.style.width = '400px';
+ img.style.height = '400px';
+} */
+
+/* function smaller(){
+ img.style.width = '50px';
+ img.style.height = '50px';
+}   */
+
+function store_changeStatus(sid,status){
+	var reason="";
+	if(status==2){ //说明是驳回
+		$.messager.prompt('提示信息', '请输入驳回理由:', function(reason){
+			store_change(sid,status,reason)
+		});
+	}else if(status==4){
+		$.messager.prompt('提示信息', '请输入冻结缘由:', function(reason){
+			store_change(sid,status,reason);
+		});
+	}else{
+		store_change(sid,status,reason);
+	}
+}
+
+
+
+function store_change(sid,status,reason){
+	$.post("../../storeServlet",{op:"changeStatus",sid:sid,status:status,reason:reason},function(data){
+		data=parseInt($.trim(data));
+		if(data>0){
+			$.messager.show({title:'成功提示',msg:'管理员信息操作成功...',timeout:2000,showType:'slide'});
+			$('#store_data').datagrid("reload");
+		}else{
+			$.messager.alert('失败提示','账号操作失败...','error');   
+		}
+	},"text");
+}
+
+function store_search(){
+	var stid=$.trim($("#store_search_stid").val());
+	var sname=$.trim($("#store_search_sname").val());
+	var prov=$.trim($("#province").val());
+	var city=$.trim($("#city").val());
+	var area=$.trim($("#district").val());
+	
+	$('#store_data').datagrid({
+		url:"../../storeServlet",
+		queryParams:{op:"findBy",stid:stid,sname:sname,prov:prov,city:city,area:area}
+	})
+}
+function bigImg(src){
+	//$("#img-container").html("");    //清空上次出现的图片
+	//alert(src);
+	var img = new Image();
+	$("#img-container").css("display","block");
+	$("#imgBig").attr("src",src);
+	
+	//$("#img-container").append( src );
+}
+
+function smallImg(){
+	$("#img-container").css("display","none");
+}
+</script>
+<script type="text/javascript" src="../../js/city2.js"></script>

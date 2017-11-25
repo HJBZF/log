@@ -1,0 +1,117 @@
+<table id="storeType_data"></table>
+
+<script type="text/javascript">
+var storeTypeEditRow=undefined;  //当前正在编辑的行
+var storeTypeOp;  //操作
+var storeTypeFlag;  //标识
+var storeTypeObj=$('#storeType_data').datagrid({   
+    url:'../../storeTypeServlet',  
+    queryParams:{op:"findByPage"},
+    fitColumns:true,
+    pagination:true,
+    rownumbers:true,
+    striped:true,
+    fit:true,
+    remoteSort:false,
+    pageSize:5,
+    pageList:[5,10,20,30,40,50],
+    sortName:'stid',
+    columns:[[   
+        {checkbox:true},
+        {field:'stid',title:'店铺类型编号',width:100,align:'center',sortable:true},   
+        {field:'stname',title:'店铺类型',width:100,align:'center',editor:{type:"text",options:{required:true}}},   
+        {field:'discr',title:'类型描述',width:100,align:'center',editor:{type:"text",options:{required:true}}}   
+    ]],
+    toolbar: [{
+    	text:"添加",
+		iconCls: 'icon-add',
+		handler: function(){
+			storeTypeOp="addStoreType";
+			storeTypeFlag="添加";
+			
+			if(storeTypeEditRow==undefined){
+				storeTypeObj.datagrid('insertRow',{index:0,row: {}});
+				storeTypeObj.datagrid('beginEdit',0);
+				storeTypeEditRow=0;
+			}else{
+				storeTypeObj.datagrid('rejectChanges');
+				storeTypeEditRow=undefined;
+			}			
+		}
+	},'-',{
+		text:"修改",
+		iconCls: 'icon-edit',
+		handler: function(){
+			storeTypeOp="editStoreType";
+			storeTypeFlag="修改";
+			
+			if(storeTypeEditRow!=undefined){
+				storeTypeObj.datagrid('endEdit',storeTypeEditRow);  //结束编辑
+				storeTypeObj.datagrid('rejectChanges');
+				storeTypeEditRow=undefined;
+			}
+			
+			var row=storeTypeObj.datagrid('getChecked')[0];
+			if(row==undefined){
+				$.messager.show({title:'温馨提示',msg:'请选择您要修改的店铺类型信息...',timeout:2000,showType:'slide'});
+			}else{
+				var index=storeTypeObj.datagrid('getRowIndex',row);
+				storeTypeObj.datagrid('beginEdit',index);
+				storeTypeEditRow=index;
+			}
+		}
+	},'-',{
+		text:"删除",
+		iconCls: 'icon-remove',
+		handler: function(){
+			var rows=storeTypeObj.datagrid('getChecked');
+			if(rows.length<=0){
+				$.messager.show({title:'温馨提示',msg:'请选择您要删除的店铺类型信息...',timeout:2000,showType:'slide'});
+			}else{
+				$.messager.confirm('删除确认','数据一旦删除将不能恢复，您确定要删除吗?',function(r){   
+				    if (r){   
+				        var stids="";
+				        for(var i=0,len=rows.length;i<len-1;i++){
+				        	stids+=rows[i].stid+",";
+				        }
+				        stids+=rows[i].stid;
+				        
+				        $.post("../../storeTypeServlet",{op:"deleteStoreType",stids:stids},function(data){
+							if(data>0){
+								$.messager.show({title:'成功提示',msg:'店铺类型信息删除成功...',timeout:2000,showType:'slide'});
+							}else{
+								$.messager.alert('失败提示','店铺类型信息删除失败...','error');   
+							}
+							storeTypeObj.datagrid("reload");
+						},"text");
+				    }   
+				});  
+			}
+		}
+	},'-',{
+		text:"保存",
+		iconCls: 'icon-save',
+		handler: function(){
+			if(storeTypeEditRow!=undefined){
+				storeTypeObj.datagrid('endEdit',storeTypeEditRow);
+				var row=storeTypeObj.datagrid('getChanges')[0];
+				
+				if(row!=undefined){
+					row.op=storeTypeOp;
+					
+					$.post("../../storeTypeServlet",row,function(data){
+						data=parseInt( $.trim(data) );
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:storeTypeFlag+'店铺类型信息成功...',timeout:2000,showType:'slide'});
+						}else{
+							$.messager.alert('失败提示',storeTypeFlag+'店铺类型信息失败...','error');   
+						}
+						storeTypeObj.datagrid("reload");
+						storeTypeEditRow=undefined;
+					},"text");
+				}
+			}
+		}
+	}]
+});  
+</script>

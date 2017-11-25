@@ -1,0 +1,131 @@
+<table id="cusInfo_data"></table>
+
+<div id="cusInfo_search">
+	<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-user-cross',plain:true" style="float:left">冻结</a>
+	<div class="datagrid-btn-separator"></div>
+	<label>会员查找：</label>
+	<select id="cusInfo_search_stid">
+		<option value="">--全部--</option>
+	</select>
+	<label>店铺名称：</label>
+	<input type="text" name="sname" id="cusInfo_search_uname">
+	<label>省份：</label>
+	<select id="province" name="province">
+		<option value="">--请选择---</option>
+	</select>
+	<label>城市：</label>
+	<select id="city" name="city">
+		<option value="">--请选择---</option>
+	</select>
+	<label>地区：</label>
+	<select id="district" name="district">
+		<option value="">--请选择---</option>
+	</select>
+	<a href="javascript:cusInfo_search()" class="easyui-linkbutton" data-options="iconCls:'icon-user-magnify'">查询</a>
+</div>
+
+<script type="text/javascript">
+var store_storeType_data;
+var store_status=["注销","正常","未审核","审核未通过","冻结"];
+function cusInfo_search_stid(){
+	$.get("../../cusInfoServlet",{op:"find"},function(data){ //查询店铺类型
+		store_storeType_data=data;
+		
+		var str="";
+		$.each(data,function(index,item){
+			str+="<option value='"+item.email+"'>"+item.uname+"</option>";
+		});
+		$("#cusInfo_search_stid").append($(str));
+	
+		store_showStore();
+	},"json");
+}
+
+
+	var userObj=$('#cusInfo_data').datagrid({   
+    url:'../../cusInfoServlet',  
+    queryParams:{op:"findByPage"},           /* 查询参数 */
+    fitColumns:true,            /* 适合列        设置为true将自动使列适应表格宽度以防止出现水平滚动*/
+    pagination:true,            /* 页码         设置true将在数据表格底部显示分页工具栏 */
+    rownumbers:true,          /* 一行数字，行标题      设置为true将显示行数*/
+    striped:true,                 /* 设置为true将交替显示行背景。 */
+    fit:true,                   /* 排版适合 */
+    remoteSort:false,        /*  定义是否通过远程服务器对数据排序 */
+    pageSize:5,
+    pageList:[5,10,20,30,40,50],
+    sortName:'usid',
+    columns:[[   
+        {checkbox:true},
+        {field:'usid',title:'会员编号',width:100,align:'center',sortable:true},   
+        {field:'uname',title:'会员昵称',width:100,align:'center'},   
+       	{field:'email',title:'会员邮箱',width:100,align:'center'},
+       	{field:'tel',title:'联系电话',width:100,align:'center'},
+       	{field:'pro',title:'店铺省份',width:100,align:'center'},
+       	{field:'city',title:'店铺城市',width:100,align:'center'},
+       	{field:'area',title:'店铺地区',width:100,align:'center'},
+       	{field:'status',title:'状态',width:100,align:'center',formatter:function(val,row,index){
+        	return store_status[val];
+        }},  
+       	{field:'_operate',title:'操作',width:100,align:'center',formatter:function(val,row,index){
+        	var str="";
+        	if(row.status==0){ //注销
+        		str="";
+        	}else if(row.status==1){ //正常
+        		str+="<a href='javascript:store_changeStatus(\""+row.usid+"\",4)'>[冻结]</a>";
+        	}else if(row.status==2){ //未审核
+        		str+="<a href='javascript:store_changeStatus("+row.usid+",1)'>[通过]</a>";
+        		str+="<a href='javascript:store_changeStatus("+row.usid+",3)'>[驳回]</a>";
+        	}else if(row.status==4){ //冻结
+        		str+="<a href='javascript:store_changeStatus(\""+row.usid+"\",1)'>[解冻]</a>";
+        	}
+        	return str;
+        }}
+    ]],
+    	toolbar:"#cusInfo_search"
+	});
+
+
+
+function store_changeStatus(uname,status){
+	/* var reason=""; */
+	if(status==2){ //说明是驳回
+		/* $.messager.prompt('提示信息', '请输入驳回理由:', function(reason){
+			store_change(uname,status,reason)
+		}); */
+		store_change(uname,status)
+	}else if(status==4){
+		/* $.messager.prompt('提示信息', '请输入冻结缘由:', function(reason){
+			store_change(uname,status,reason);
+		}); */
+		store_change(uname,status);
+	}else{
+		store_change(uname,status);
+	}
+}
+
+function store_change(pwd,status){
+	$.post("../../cusInfoServlet",{op:"changeStatus",usid:pwd,status:status},function(data){
+		data=parseInt($.trim(data));
+		if(data>0){
+			$.messager.show({title:'成功提示',msg:'管理员信息操作成功...',timeout:2000,showType:'slide'});
+			$('#cusInfo_data').datagrid("reload");
+		}else{
+			$.messager.alert('失败提示','账号操作失败...','error');   
+		}
+	},"text");
+}
+
+function cusInfo_search(){
+	var uname=$.trim($("#cusInfo_search_uname").val());
+	var prov=$.trim($("#province").val());
+	var city=$.trim($("#city").val());
+	var area=$.trim($("#district").val());
+	
+	$('#cusInfo_data').datagrid({
+		url:"../../cusInfoServlet",
+		queryParams:{op:"findBy",uname:uname,prov:prov,city:city,area:area}
+	})
+}
+</script>
+<script type="text/javascript" src="../../js/city2.js"></script>
+</script>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>后台管理系统</title>
+<link rel="stylesheet" type="text/css" href="../myeasyui/css/easyui.css" />
+<link rel="stylesheet" type="text/css" href="../myeasyui/css/wu.css" />
+<link rel="stylesheet" type="text/css" href="../myeasyui/css/icon.css" />
+<script type="text/javascript" src="../myeasyui/js/jquery-1.12.4.js"></script>
+<script type="text/javascript" src="../myeasyui/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../myeasyui/js/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../js/showpic.js"></script>
+<script type="text/javascript" src="../js/ajaxfileupload.js"></script>
+
+<style>
+	#loginWindow{
+		position:absolute;
+		top:50%;
+		left:50%;
+		
+		-moz-transform:translate(-50%,-50%);
+		-webkit-transform:translate(-50%,-50%);
+		transform:translate(-50%,-50%);
+	}
+	ul li{
+		list-style-type:none;
+		margin-top:10px;
+	}
+	ul>li>label{
+		display:inline-block;
+		width:50px;
+		text-align: right;
+	}
+	.mytext{
+		width: 200px;
+		line-height: 20px;
+	}
+	.easyui-dialog p{
+		margin-left: 50px;
+		margin-top: 10px;
+		width:290px;
+		font-size:14px;
+	}
+	.easyui-dialog .login_p1{
+		margin-top: 40px;
+	}
+	.easyui-dialog p input{
+		width:200px;
+		height:22px;
+		font-size:14px;
+	}
+	.easyui-dialog p select{
+		width:205px;
+		height:28px;
+		font-size:14px;
+	}
+	#licensediv{
+		position: absolute;;
+		left:500px;
+	 	top:90px;	 	
+	}
+	#showpic{
+		position: absolute;;
+		left:500px;
+	 	top:200px;
+	}
+	#license_label{
+		position: absolute;;
+		left:380px;
+	 	top:65px;
+	 	width:200px;
+	 	height:30px;
+	 	font-size: 20px;
+	 	line-height: 30px;
+	}
+	#pic_label{
+		position: absolute;;
+		left:380px;
+	 	top:215px;
+	 	width:200px;
+	 	height:30px;
+	 	font-size: 20px;
+	 	line-height: 10px;
+	}
+</style>
+<script type="text/javascript">
+	function login(){
+		var aname=$.trim($("#uname").val());
+		var pwd=$.trim($("#pwd").val());
+		var sid=$.trim($("#uname").val());
+		var role=$.trim($("#role").val());
+		if(role==1){
+			$.post("../adminServlet",{op:"login",aname:aname,pwd:pwd,role:role},function(data){
+				data=parseInt($.trim(data));
+				if(data==3 && role==1){
+					location.href="mamager/index.html"; 
+				}else{
+					alert('账号或密码错误...');   
+				}
+			},"text");
+		}else if(role==2){
+			$.post("../storeServlet",{op:"login",sid:sid,pwd:pwd,role:role},function(data){
+				data=parseInt($.trim(data));
+				if(data==3 && role==2){
+					location.href="store/dianjia.html"; 
+				}else{
+					alert('账号或密码错误...');   
+				}
+			},"text");
+		}
+		
+	}
+
+	function lll(){
+		$("#uname").val(""); 
+		$("#pwd").val(""); 
+	}
+
+	function open_add_div(){
+		$('#show_add_store').dialog({   
+		    width: 1000,   
+		    height: 300,   
+		    buttons:[{
+				text:'注册',
+				handler:function(){
+					var stid=$.trim( $("#stid").val() );
+					var sname=$.trim( $("#sname").val() );
+					var storepwd=$.trim( $("#storepwd").val() );
+					var province=$.trim( $("#province").find("option:selected").text() );
+					var city=$.trim( $("#city").find("option:selected").text() );
+					var district=$.trim( $("#district").find("option:selected").text() );
+					var addr=$.trim( $("#addr").val() );
+					var tel=$.trim( $("#tel").val() );
+					var runtime=$.trim( $("#runtime").val() );
+					
+					if(sname=="" || storepwd==""){
+						$.messager.show({title:'温馨提示',msg:'您输入的信息不完整，请完善后再提交...',timeout:2000,showType:'slide'});
+						return;
+					}
+					
+					$.ajaxFileUpload({
+						url:"../storeServlet?op=addStore",
+						secureuri:false,
+						dataType:"text",
+						data:{stid:stid,sname:sname,pwd:storepwd,pro:province,city:city,area:district,addr:addr,tel:tel,runtime:runtime},
+						fileElementId:["storelicense","storepic"],
+						success:function(data,status){
+							data=parseInt( $.trim(data) );
+							if(data>0){
+								$("#store_reg")[0].reset();
+								$("#licensediv").html("");
+								$("#showpic").html("");
+								$('#show_add_store').dialog("close");
+								$.messager.alert('成功提示','店铺信息注册成功，等待后台审核...','info');
+							}else{
+								$.messager.alert('失败提示','店铺信息注册失败，请稍后再试...','error');
+							}
+						},
+						error:function(data,status,error){
+							$.messager.alert('失败提示','店铺信息注册失败，请稍后再试...\n'+error,'error');
+						}
+					})
+				}
+			},{
+				text:'关闭',
+				handler:function(){
+					$('#show_add_store').dialog('close');
+				}
+			}]
+		}); 
+		$('#show_add_store').dialog('open');  
+	}
+	
+	$(function(){
+		$.get("../storeTypeServlet",{op:"find"},function(data){
+			var str="";
+			$.each(data,function(index,item){
+				str+="<option value='"+item.stid+"'>"+item.stname+"</option>"
+			});
+			$("#stid").append( $(str) );
+		},"json")	
+	})	
+</script>
+</head>
+<body>
+<div id="loginWindow">
+	<div class="easyui-panel" title="后台登录" style="width:400px;padding:20px;> 
+		<form id="backlogin" method="post">
+			<ul>
+				<li>
+					<label>角色：</label>
+					<select id="role">
+						<option value="1">管理员</option>
+						<option value="2">店家</option>
+					</select>
+				</li>
+				<li>
+					<label>用户名：</label>
+					<input class="uname" type="text" id="uname" name="uname" data-option="required:true"/>
+				</li>
+				<li>
+					<label>密码：</label>
+					<input class="pwd" type="password" id="pwd" name="pwd"/>
+				</li>
+				<li><center>
+					<a href="javascript:login()" class="easyui-linkbutton" data-options="iconCls:'icon-accept'">登录</a> 
+					<!-- <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-undo'">重置</a> -->
+					<!-- <a onclick="document.getElementById('uname').value = '';"  class="easyui-linkbutton" data-options="iconCls:'icon-undo'">重置</a> -->
+					<a href="javascript:lll()" class="easyui-linkbutton" data-options="iconCls:'icon-undo'">重置</a>
+					<a href="javascript:open_add_div()" class="easyui-linkbutton" data-options="iconCls:'icon-user-add'">店家注册</a>  
+				</center>	
+				</li>
+			</ul>
+		</form>    
+	</div>  
+</div>
+<div id="show_add_store" class="easyui-dialog" title="店家注册" data-options="iconCls:'icon-user-add',resizable:true,modal:true,closed:true">
+	<form id="store_reg">
+		<p class="login_p1">店铺类型：
+			<select id="stid"></select>
+		</p>
+		<p>店铺名称：
+			<input type="text" id="sname"/>
+		</p>
+		<p>店铺密码：
+			<input type="password" id="storepwd"/>
+		</p>
+		<p>&nbsp;&nbsp;&nbsp;省份：
+			<select id="province" name="province"></select>
+		</p>
+		<p>&nbsp;&nbsp;&nbsp;城市：
+			<select id="city" name="city"></select>
+		</p>
+		<p>&nbsp;&nbsp;&nbsp;地区：
+			<select id="district" name="district"></select>
+		</p>
+		<p>详细地址：
+			<input type="text" id="addr"/>
+		</p>
+		<p>预约电话：
+			<input type="text" id="tel"/>
+		</p>
+		<p>营业时间：
+			<input type="text" id="runtime"/>
+		</p>
+		<p>营业执照：
+			<input type="file" id="storelicense" name="license" onchange="setImagePreviews(this,'licensediv')"/>
+		</p>
+		<div id="licensediv"></div>	
+		<p>店铺图片：
+			<input type="file" id="storepic" name="pic" multiple="multiple" onchange="setImagePreviews(this,'showpic')"/>
+		</p>
+		<div id="showpic"></div>
+	</form>	
+	<div id="license_label">营业执照图片</div>
+	<div id="pic_label">店铺图片</div>
+</div>
+<script type="text/javascript" src="../js/city.js"></script>
+</body>
+</html>
