@@ -1,0 +1,85 @@
+<!-- 封装 -->
+<!-- 封装的底层就是原生态的,,,比封装更加方便使用 -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ajax</title>
+<script type="text/javascript" src="js/jquery-1.9.1.js"></script>
+<script type="text/javascript">
+function addDept(){
+	var deptno=$.trim($("#deptno").val());   //去掉字符串首尾空格
+	var dname=$.trim($("#dname").val());
+	var loc=$.trim($("#loc").val());
+	
+	post("back/dodept.jsp",{op:"addDept",deptno:deptno,dname:dname,loc:loc},function(data){
+		var txt=parseInt($.trim(data));   //获取响应的文本内容
+		if(txt>0){ 
+			location.href="success2.html";
+		}else{
+			alert("添加部门失败...");
+		}
+	});
+}
+
+function checkDname(val){
+	if(val==""){
+		$("#dnamelab").text("部门名称不能为空...").css("color","red");
+		return;
+	}
+	
+	post("back/dodept.jsp",{op:"checkDname",dname:val},function(data){
+		var txt=parseInt($.trim(data));   //获取相应的文本内容
+		if(txt==1){
+			$("#dnamelab").text("该部门名称已经存在...").css("color","red");
+		}else{
+			$("#dnamelab").text("该部门名称可用...").css("color","green");
+		}
+	}); 
+}
+
+function post(url,params,callback){
+	var xmlHttp;
+	if(window.XMLHttpRequest){
+		xmlHttp=new XMLHttpRequest();
+	}else if(window.ActiveXObject){
+		xmlHttp=new ActiveXobject("Microsoft.XMLHTTP");
+	}
+	
+	//用来监听请求发送的状态的变化
+	xmlHttp.onreadystatechange=function(){
+		if(xmlHttp.readyState==4){   //说明请求已经发送成功并等到的服务器的响应
+			if(xmlHttp.status==200){   //说明是一次成功的访问
+				callback(xmlHttp.responseText);
+			}
+		}
+	}
+	xmlHttp.open("POST",url);   //发送请求
+	//设置请求的类型
+	xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	var str="";
+	for(var obj in params){
+		str+=obj+"="+params[obj]+"&";
+	}
+	xmlHttp.send(str);   //发送数据
+}
+</script>
+</head>
+<body>
+	<form>
+		<p>
+			部门编号：<input type="text" name="deptno" id="deptno"/>
+		</p>
+		<p>
+			部门名称：<input type="text" name="dname" id="dname" placeholder="请输入部门名称"
+				onfocus="$('#dnamelab').text('')" onblur="checkDname(this.value)"/><label id="dnamelab"></label>
+		</p>
+		<p>
+			部门地址：<input type="text" name="loc" id="loc">
+		</p>
+		<p>
+			<input type="button" value="提交" onclick="addDept()"/>
+		</p>
+	</form>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>ajax</title>
+<script type="text/javascript" src="js/jquery-1.9.1.js"></script>
+<script type="text/javascript">
+
+function userLogin(){
+	<!--就是通过 id来设置/返回HTML标签的属性及调用其事件与方法-->
+	var uname=document.getElementById("uname").value;
+	var pwd=document.getElementById("pwd").value;
+	
+	//用js模拟一个请求发送到服务器
+	var xmlHttp;
+	if(window.XMLHttpRequest){         //if(window.XMLHttpRequest){...}   是接收 的数据，从SERVLET反应回来的东西
+		xmlHttp=new XMLHttpRequest();
+	}else if(window.ActiveXObject){   //判断浏览器是否支持ActiveX控件，如果浏览器支持ActiveX控件可以利用 var xml=new ActiveXObject("Microsoft.XMLHTTP")创建XMLHttpRequest 对象
+		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	
+	/* //用来监听请求发送的状态的变化
+	xmlHttp.onreadystatechange=function(){
+		if(xmlHttp.readyState==4){   //说明请求已经发送成功并等到的服务器响应
+			if(xmlHttp.status==200){   //说明是一次成功的访问
+				alert(xmlHttp.responseText);   //获取响应的文本内容
+			}
+		}
+	}  */
+	
+	//用来监听请求发送的状态的变化
+	xmlHttp.onreadystatechange=function(){
+		if(xmlHttp.readyState==4){  //说明请求已经发送成功并等到服务器的响应
+			if(xmlHttp.status==200){   //说明是一次成功的访问
+				var txt=$.trim(xmlHttp.responseText);   //获取响应的文本内容
+				alert(txt=="0");
+				if(txt=="0"){
+					alert("用户名或密码错误...");
+				}else{
+					location.href="success.html";
+				}
+			}
+		}
+	}
+	
+	xmlHttp.open("GET","back/dologin.jsp?uname="+uname+"&pwd="+pwd);   //发送请求
+	xmlHttp.send(null);    //发送数据
+}
+</script>
+</head>
+<body>
+<form action="back/dologin.jsp" method="get">
+用户名：<input  type="text" name="uname" id="uname"/>
+密码：<input type="password" name="pwd" id="pwd"/>
+<input type="button" value="提交" onclick="userLogin()"/>
+</form>
+</body>
+</html>

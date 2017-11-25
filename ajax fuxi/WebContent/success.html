@@ -1,0 +1,65 @@
+<!-- 原生态 -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>success</title>
+<script type="text/javascript" src="js/jquery-1.9.1.js"></script>
+<script type="text/javascript">
+function post(url,params,callback){
+	var xmlHttp;
+	if(window.XMLHttpRequest){
+		xmlHttp=new XMLHttpRequest();
+	}else if(window.ActiveXObject){
+		xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	
+	//用来监听请求发送的状态变化
+	xmlHttp.onreadystatechange=function(){
+		if(xmlHttp.readyState==4){  //说明请求已经发送成功并等到的服务器的响应
+			if(xmlHttp.status==200){  //说明是一次成功的访问
+				callback(xmlHttp.responseText);
+			}
+		}
+	}
+	
+	xmlHttp.open("POST",url); //发送请求
+	//设置请求的类型
+	xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");//请求类型：普通字符串
+	var str="";
+	for(var obj in params){
+		str+=obj+"="+params[obj]+"&";
+	}
+	xmlHttp.send(str);//发送数据
+}
+$(function(){
+	post("back/dodept.jsp",{op:"finds"},function(data){
+		console.info(data); //json
+		//$("#info").append( data);
+		//将这个json格式的字符串data转化成json对象
+		var obj=JSON.parse(data);
+		var str="";
+		for(var i=0,len=obj.length;i<len;i++){
+			 str+="<tr><td>"+obj[i].deptno+"</td><td>"+obj[i].dname+"</td><td>"+obj[i].loc+"</td></tr>";
+	    }
+		$("#info").append( str );
+   });
+});
+
+</script>
+</head>
+<body>
+<table width="80%" align="0px" cellspacing="0px" cellpadding="0px" border="1px">
+      <thead>
+      		<tr>
+      			<th>部门编号</th>
+      			<th>部门名称</th>
+      			<th>部门地址</th>
+      		</tr>
+      </thead>
+      <tbody align="center" id="info">
+      
+      </tbody>
+</table>
+</body>
+</html>
